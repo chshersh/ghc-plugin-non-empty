@@ -12,18 +12,18 @@ license-file:        LICENSE
 author:              Dmitrii Kovanikov
 maintainer:          Dmitrii Kovanikov <kovanikov@gmail.com>
 copyright:           2022 Dmitrii Kovanikov
-category:            GHC,Compiler Plugin
+category:            GHC, Compiler Plugin
 build-type:          Simple
 extra-doc-files:     README.md
                      CHANGELOG.md
-tested-with:         GHC == 9.0.2
+tested-with:         GHC == 9.2.2
 
 source-repository head
   type:                git
   location:            https://github.com/chshersh/ghc-plugin-non-empty.git
 
 common common-options
-  build-depends:       base ^>= 4.15.1.0
+  build-depends:       base ^>= 4.16
 
   ghc-options:         -Wall
                        -Wcompat
