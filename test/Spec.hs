@@ -1,7 +1,5 @@
 module Main (main) where
 
-import GhcPluginNonEmpty (projectName)
-
 
 main :: IO ()
-main = putStrLn ("Tests for " ++ projectName)
+main = putStrLn ("Tests for foo")
