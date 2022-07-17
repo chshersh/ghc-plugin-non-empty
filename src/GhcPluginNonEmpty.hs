@@ -1,11 +1,57 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 
 {- |
-Copyright: (c) 2022 Dmitrii Kovanikov
-SPDX-License-Identifier: MPL-2.0
-Maintainer: Dmitrii Kovanikov <kovanikov@gmail.com>
+Module                  : Iris
+Copyright               : (c) 2022 Dmitrii Kovanikov
+SPDX-License-Identifier : MPL-2.0
+Maintainer              : Dmitrii Kovanikov <kovanikov@gmail.com>
+Stability               : Stable
+Portability             : Portable
 
-GHC Plugin for non-empty lists
+GHC Plugin for rewriting list literals of non-empty list to 'NonEmpty'
+type. Enable the plugin in a module where you want to use it like on
+the example below:
+
+@
+\{\-\# __OPTIONS_GHC__ -fplugin=GhcPluginNonEmpty \#\-\}
+
+__import__ "Data.List.NonEmpty" ('NonEmpty')
+
+portsToListen :: 'NonEmpty' 'Int'
+portsToListen = [8000, 8080, 8081]
+@
+
+You can also enable the plugin globally in your entire project from
+the @.cabal@ file:
+
+@
+library
+   ...
+   ghc-options: -fplugin=GhcPluginNonEmpty
+@
+
+It guarantees that only non-empty lists will be automatically
+rewritten. Otherwise, if you use an empty list:
+
+@
+portsToListen :: 'NonEmpty' 'Int'
+portsToListen = []
+@
+
+You'll see ordinary compiler error:
+
+@
+src\/Path\/To\/My\/Module:34:17: error:
+    • Couldn't match expected type: NonEmpty Int
+                  with actual type: [a0]
+    • In the expression: []
+      In an equation for ‘portsToListen’: portsToListen = []
+   |
+34 | portsToListen = []
+   |                 ^^
+@
+
+@since 0.0.0.0
 -}
 
 module GhcPluginNonEmpty
@@ -45,6 +91,21 @@ import Data.List.NonEmpty (NonEmpty (..))
 import qualified GHC
 
 
+
+{- | Main compiler plugin. Use the following GHC option to enable it:
+
+@
+\{\-\# OPTIONS_GHC -fplugin=GhcPluginNonEmpty \#\-\}
+@
+
+Implemented in two steps:
+
+1. Rewrites @[3, 1, 2]@ to @'_xxx_ghc_plugin_nonEmpty_fromList' 'cons' [3, 1, 2]@
+2. Find applications of '_xxx_ghc_plugin_nonEmpty_fromList' and rewrites them to
+   @'cons' 3 [1, 2]@
+
+@since 0.0.0.0
+-}
 plugin :: Plugin
 plugin = defaultPlugin
     { pluginRecompile = purePlugin
@@ -198,7 +259,16 @@ isNonEmptyWrapper hsWrapper = "@NonEmpty" `isInfixOf` strWrapper
 -- List wrapper
 --------------------------
 
+{- | ⚠️ __WARNING! Don't use this typeclass!__ ⚠️
+
+This is an internal typeclass for the plugin to work correctly but it
+must be imported from this module. Don't use methods of this typeclass
+in your code as it may result in incorrect compilation of your code.
+
+@since 0.0.0.0
+-}
 class GhcPlugnNonEmptyClass listOf where
+    -- | @since 0.0.0.0
     _xxx_ghc_plugin_nonEmpty_fromList
         :: (a -> [a] -> NonEmpty a)
         -- ^ Typechecked non-empty constructor
@@ -207,11 +277,13 @@ class GhcPlugnNonEmptyClass listOf where
         -> listOf a
         -- ^ Resulting list
 
+-- | @since 0.0.0.0
 instance GhcPlugnNonEmptyClass [] where
     _xxx_ghc_plugin_nonEmpty_fromList :: (a -> [a] -> NonEmpty a) -> [a] -> [a]
     _xxx_ghc_plugin_nonEmpty_fromList _ l = l
     {-# INLINE _xxx_ghc_plugin_nonEmpty_fromList #-}
 
+-- | @since 0.0.0.0
 instance GhcPlugnNonEmptyClass NonEmpty where
     _xxx_ghc_plugin_nonEmpty_fromList :: (a -> [a] -> NonEmpty a) -> [a] -> NonEmpty a
     _xxx_ghc_plugin_nonEmpty_fromList = error $ unlines
@@ -224,6 +296,9 @@ instance GhcPlugnNonEmptyClass NonEmpty where
         ]
     {-# NOINLINE _xxx_ghc_plugin_nonEmpty_fromList #-}
 
--- | Constructor for 'NonEmpty'
+{- | Constructor for 'NonEmpty'. Named alias to ':|'.
+
+@since 0.0.0.0
+-}
 cons :: a -> [a] -> NonEmpty a
 cons = (:|)
