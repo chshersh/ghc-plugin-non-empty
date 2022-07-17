@@ -78,8 +78,16 @@ test-suite ghc-plugin-non-empty-test
   import:              common-options
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
+
   main-is:             Spec.hs
-  build-depends:       ghc-plugin-non-empty
+  other-modules:       Test.Data.Fail
+                       Test.Data.Plain
+                       Test.Data.Overloaded
+
+  build-depends:
+    , ghc-plugin-non-empty
+    , hspec ^>= 2.10
+
   ghc-options:         -threaded
                        -rtsopts
                        -with-rtsopts=-N
