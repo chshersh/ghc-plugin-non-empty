@@ -72,7 +72,6 @@ library
 
   build-depends:
     , ghc           ^>= 9.2
-    , pretty-simple ^>= 4.1
     , syb           ^>= 0.7
 
 test-suite ghc-plugin-non-empty-test

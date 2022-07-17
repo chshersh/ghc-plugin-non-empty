@@ -16,34 +16,31 @@ module GhcPluginNonEmpty
     , cons
     ) where
 
-import Control.Exception
-
 import GHC.Driver.Plugins (CommandLineOption, Plugin (..), defaultPlugin, purePlugin)
 import GHC.Hs.Expr (HsWrap (..), XXExprGhcTc (WrapExpr))
 import GHC.Hs.Extension (GhcRn, GhcTc)
 import GHC.Iface.Env (lookupOrig)
-import GHC.Parser.Annotation (EpAnn (..), NoEpAnns, SrcSpanAnn' (..), SrcSpanAnnA, SrcSpanAnnN)
-import GHC.Plugins (Name, mkDataOcc, mkVarOcc)
+import GHC.Parser.Annotation (EpAnn (..), SrcSpanAnn' (..))
+import GHC.Plugins (Name, mkVarOcc)
 import GHC.Tc.Types (TcGblEnv (tcg_binds), TcM)
+import GHC.Tc.Types.Evidence (HsWrapper, pprHsWrapper)
 import GHC.Tc.Utils.Monad (getTopEnv)
-import GHC.Types.SrcLoc (GenLocated (L), SrcSpan (..), UnhelpfulSpanReason (..), noLoc, unLoc)
+import GHC.Types.SrcLoc (GenLocated (L), SrcSpan (..), UnhelpfulSpanReason (..))
 import GHC.Types.TyThing (MonadThings (lookupId))
 import GHC.Types.Var (Id)
 import GHC.Unit.Finder (FindResult (..), findImportedModule)
 import GHC.Unit.Module.ModSummary (ModSummary)
-import GHC.Utils.Outputable
-import Language.Haskell.Syntax.Binds (LHsBinds)
+import GHC.Utils.Outputable (defaultSDocContext, renderWithContext, sdocPrintTypecheckerElaboration,
+                             text)
 import Language.Haskell.Syntax.Decls (HsGroup)
 import Language.Haskell.Syntax.Expr (HsExpr (..), LHsExpr)
 import Language.Haskell.Syntax.Extension (NoExtField (..))
 
 import Control.Monad.IO.Class (MonadIO (..))
-import Data.Data (Data)
 import Data.Generics.Aliases (mkM, mkT)
-import Data.Generics.Schemes (everywhere, everywhereM, listify)
-import Data.Generics.Text (gshow)
+import Data.Generics.Schemes (everywhere, everywhereM)
+import Data.List (isInfixOf)
 import Data.List.NonEmpty (NonEmpty (..))
-import Text.Pretty.Simple (pPrintString)
 
 import qualified GHC
 
@@ -154,7 +151,7 @@ rewriteToNonEmpty ghcPluginNonEmptyFromListId = \case
                         (XExpr
                             (WrapExpr
                                 (HsWrap
-                                    _
+                                    varType
                                     (HsVar _ (L _ varName))
                                 )
                             )
@@ -168,7 +165,10 @@ rewriteToNonEmpty ghcPluginNonEmptyFromListId = \case
                 (ExplicitList listType items)
             )
         )
-      | varName == ghcPluginNonEmptyFromListId -> case items of
+      | varName == ghcPluginNonEmptyFromListId ->
+        if isNonEmptyWrapper varType
+        -- transform non-empty lists
+        then case items of
             -- if the list is empty, we just remove our wrapper and let GHC deal with it
             [] -> pure r
 
@@ -177,7 +177,22 @@ rewriteToNonEmpty ghcPluginNonEmptyFromListId = \case
                 (mkSpan $ HsApp EpAnnNotUsed nonEmptyCtor x)
                 (mkSpan $ ExplicitList listType xs)
 
+        -- remove the wrapper for ordinary lists
+        else pure r
+
     expr -> pure expr
+
+{- | This function uses a dirty hack to check if the inferred type for
+'__xxx_ghc_plugin_nonEmpty_fromList' is for 'NonEmpty'.
+-}
+isNonEmptyWrapper :: HsWrapper -> Bool
+isNonEmptyWrapper hsWrapper = "@NonEmpty" `isInfixOf` strWrapper
+  where
+    -- HsWrapper pretty-printed as 'String'
+    strWrapper :: String
+    strWrapper = renderWithContext
+        defaultSDocContext { sdocPrintTypecheckerElaboration = True }
+        $ pprHsWrapper hsWrapper (\_ -> text "wtf?")
 
 --------------------------
 -- List wrapper
