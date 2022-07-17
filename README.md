@@ -51,7 +51,7 @@ need to set it up with these steps:
 2. To use this package, refer to the below example.
 
    ```haskell
-   {-# OPTIONS_GHC -fplugin GhcPluginNonEmpty #-}
+   {-# OPTIONS_GHC -fplugin=GhcPluginNonEmpty #-}
 
    module Main (main) where
 

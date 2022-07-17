@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fplugin GhcPluginNonEmpty #-}
+{-# OPTIONS_GHC -fplugin=GhcPluginNonEmpty #-}
 
 module Test.Data.Plain
     ( emptyList

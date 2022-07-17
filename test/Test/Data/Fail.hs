@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fplugin GhcPluginNonEmpty #-}
+{-# OPTIONS_GHC -fplugin=GhcPluginNonEmpty #-}
 {-# OPTIONS_GHC -fdefer-type-errors #-}
 {-# OPTIONS_GHC -Wno-deferred-type-errors #-}
 

@@ -3,8 +3,19 @@ name:                ghc-plugin-non-empty
 version:             0.0.0.0
 synopsis:            GHC Plugin for non-empty lists
 description:
-    GHC Plugin for non-empty lists.
-    See [README.md](https://github.com/chshersh/ghc-plugin-non-empty#ghc-plugin-non-empty) for more details.
+    GHC Plugin for compile-time transformation of list literals to @NonEmpty@ lists.
+
+    @
+    {-# __OPTIONS_GHC__ -fplugin=GhcPluginNonEmpty #-}
+
+    __import__ Data.List.NonEmpty (NonEmpty)
+
+    portsToListen :: NonEmpty Int
+    portsToListen = [8000, 8080, 8081]
+    @
+
+    See [README.md](https://github.com/chshersh/ghc-plugin-non-empty#ghc-plugin-non-empty)
+    for more details.
 homepage:            https://github.com/chshersh/ghc-plugin-non-empty
 bug-reports:         https://github.com/chshersh/ghc-plugin-non-empty/issues
 license:             MPL-2.0
